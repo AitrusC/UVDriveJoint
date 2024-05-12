@@ -1,0 +1,418 @@
+# coding=utf-8
+# @FileName      :driveFunction
+# @Time          :2023/10/18 21:49
+# @Author        :AhrIlI
+# @Contact       :906629272@qq.com
+
+import maya.cmds as cmds
+from PySide2.QtWidgets import *
+from maya.OpenMaya import *
+
+suffix = ["_ty_plus", "_ty_minus", "_tz_plus", "_tz_minus"]
+directions = [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
+finger_name = ["ThumbFinger1_R", "ThumbFinger2_R", "ThumbFinger3_R",
+               "IndexFinger1_R", "IndexFinger2_R", "IndexFinger3_R",
+               "MiddleFinger1_R", "MiddleFinger2_R", "MiddleFinger3_R",
+               "RingFinger1_R", "RingFinger2_R", "RingFinger3_R",
+               "PinkyFinger1_R", "PinkyFinger2_R", "PinkyFinger3_R"
+               ]
+
+crv_points = [(-0.5, 0.0, 5.551115123125783e-17),
+              (-0.5000000000000002, -0.13060193748187082, 1.764511734992259e-17),
+              (-0.3918058124456122, -0.39180581244561224, 9.770372818361252e-18),
+              (-0.13060193748187082, -0.5000000000000001, 1.975851338064811e-17),
+              (0.0, -0.5, 5.551115123125783e-17),
+              (0.13060193748187063, -0.5000000000000002, 3.575263785060967e-17),
+              (0.39180581244561213, -0.3918058124456124, 5.775274622824593e-17),
+              (0.5000000000000001, -0.1306019374818706, 7.887745730729024e-17),
+              (0.5, 0.0, 5.551115123125783e-17),
+              (0.5000000000000001, 0.13060193748187107, 9.337718511259307e-17),
+              (0.39180581244561213, 0.39180581244561247, 1.0125192964415441e-16),
+              (0.1306019374818707, 0.5000000000000002, 9.126378908186754e-17),
+              (-2.7755575615628914e-17, 0.4999999999999998, 8.326672684688677e-17),
+              (-0.13060193748187077, 0.5000000000000001, 7.526966461190597e-17),
+              (-0.39180581244561224, 0.39180581244561213, 5.32695562342697e-17),
+              (-0.5000000000000002, 0.13060193748187066, 3.214484515522541e-17),
+              (-0.5000000000000002, -8.326672684688674e-17, 0.0),
+              (-0.5, 7.997062234980793e-18, -0.1306019374818708),
+              (-0.39180581244561213, 2.3991186704942356e-17, -0.3918058124456121),
+              (-0.1306019374818708, 3.061616997868383e-17, -0.49999999999999994),
+              (0.0, 0.0, -0.49999999999999994),
+              (0.1306019374818708, 3.0616169978683824e-17, -0.4999999999999999),
+              (0.3918058124456125, 2.399118670494234e-17, -0.39180581244561186),
+              (0.5000000000000002, 7.997062234980767e-18, -0.13060193748187038),
+              (0.5000000000000001, -1.617781153285278e-32, 3.0531133177191805e-16),
+              (0.49999999999999994, -7.9970622349808e-18, 0.130601937481871),
+              (0.3918058124456119, -2.3991186704942363e-17, 0.39180581244561224),
+              (0.13060193748187052, -3.0616169978683836e-17, 0.5000000000000002),
+              (0.0, 0.0, 0.5),
+              (-5.961562558928949e-17, 0.13060193748187088, 0.5),
+              (-1.1098955353675924e-16, 0.39180581244561224, 0.3918058124456121),
+              (-1.1901936469749647e-16, 0.5000000000000001, 0.1306019374818706),
+              (-1.1102230246251565e-16, 0.5, -9.71445146547012e-17),
+              (-1.0302524022753486e-16, 0.5, -0.1306019374818708),
+              (-6.30071801268745e-17, 0.39180581244561213, -0.3918058124456121),
+              (1.6167143680782006e-18, 0.1306019374818708, -0.49999999999999994),
+              (3.0616169978683836e-17, 1.3877787807814457e-17, -0.49999999999999994),
+              (5.961562558928947e-17, -0.1306019374818708, -0.4999999999999999),
+              (1.1098955353675929e-16, -0.3918058124456125, -0.39180581244561186),
+              (1.1901936469749647e-16, -0.5000000000000002, -0.13060193748187038),
+              (1.1102230246251565e-16, -0.5000000000000001, 3.0531133177191805e-16),
+              (1.0302524022753484e-16, -0.49999999999999994, 0.130601937481871),
+              (6.300718012687445e-17, -0.3918058124456119, 0.39180581244561224),
+              (-1.6167143680782592e-18, -0.13060193748187052, 0.5000000000000002),
+              (-3.0616169978683873e-17, 1.8041124150158794e-16, 0.5),
+              (-0.13060193748187088, -3.061616997868383e-17, 0.5),
+              (-0.39180581244561224, -2.3991186704942347e-17, 0.3918058124456121),
+              (-0.5000000000000001, -7.997062234980776e-18, 0.1306019374818706),
+              (-0.5, 8.474091755303838e-33, -9.71445146547012e-17)]
+crv_knots = [2.0, 2.0, 2.0, 3.0, 4.0, 4.0, 4.0, 5.0, 6.0, 6.0, 6.0, 7.0, 8.0, 8.0, 8.0, 9.0, 10.0, 10.0, 10.0, 11.0,
+             12.0, 12.0, 12.0, 13.0, 14.0, 14.0, 14.0, 15.0, 16.0, 16.0, 16.0, 17.0, 18.0, 18.0, 18.0, 19.0, 20.0, 20.0,
+             20.0, 21.0, 22.0, 22.0, 22.0, 23.0, 24.0, 24.0, 24.0, 25.0, 26.0, 26.0, 26.0]
+crv_form = 0
+crv_degree = 3
+crv_color = 22
+
+
+def setColour(shape, color):
+    """
+    设置曲线颜色
+    :param shape: 曲线的shape
+    :param color: overrideColor
+    :return:
+    """
+    cmds.setAttr(shape + ".overrideEnabled", 1)
+    cmds.setAttr(shape + ".overrideColor", color)
+    return 0
+
+
+def setShape(crv):
+    """
+    设置曲线形状
+    :param crv: 需要设置的曲线的transform名称
+    :return:
+    """
+    crv_shapes = cmds.listRelatives(crv, s = True)
+    if crv_shapes is not None:
+        cmds.delete(crv_shapes)
+    tmp_crv = cmds.curve(p = crv_points, k = crv_knots, d = crv_degree, per = bool(crv_form))
+    new_shape = cmds.listRelatives(tmp_crv, s = 1)[0]
+    cmds.parent(new_shape, crv, r = 1, s = 1)
+    cmds.delete(tmp_crv)
+    new_shape = cmds.rename(new_shape, crv + "Shape")
+    setColour(new_shape, crv_color)
+    return 0
+
+
+def softSelectRadius(direction, matrix):
+    """
+    根据软选择范围的大小确定Loc位置
+    :param direction: 朝向
+    :param matrix: 骨骼世界矩阵
+    :return: 位置坐标
+    """
+    diameter = cmds.softSelect(q = True, ssd = True) * 2
+    direction_point = MPoint(direction[0] * diameter, direction[1] * diameter, direction[2] * diameter) * matrix
+    return [direction_point.x, direction_point.y, direction_point.z]
+
+
+def getPointToMeshClosestPos(mesh, direction, matrix):
+    """
+    获取射线与模型的交点,MFnMesh.closestIntersection的发射方向向量需为单位向量
+    :param mesh: 模型
+    :param direction: 发射方向
+    :param matrix: 骨骼世界矩阵
+    :return: 交点坐标
+    """
+    dag_path = MDagPath()
+    selection = MSelectionList()
+    selection.add(mesh)
+    selection.getDagPath(0, dag_path)
+    mesh_fn = MFnMesh(dag_path)
+    msource_ray = MPoint(0.0, 0.0, 0.0) * matrix
+    inverse_matrix_list = [1.0, 0.0, 0.0, 0.0,
+                           0.0, 1.0, 0.0, 0.0,
+                           0.0, 0.0, 1.0, 0.0,
+                           -msource_ray.x, -msource_ray.y, -msource_ray.z, 1.0]
+    inverse_matrix = MMatrix()
+    MScriptUtil.createMatrixFromList(inverse_matrix_list, inverse_matrix)
+    mdirection_ray = MPoint(*direction) * matrix * inverse_matrix
+    source_ray = MFloatPoint(*msource_ray)
+    direction_ray = MFloatVector(mdirection_ray.x, mdirection_ray.y, mdirection_ray.z)
+    point_hit = MFloatPoint()
+    result = mesh_fn.closestIntersection(source_ray, direction_ray, None, None, None, MSpace.kWorld,
+                                         99999, None, None, point_hit, None, None, None, None,
+                                         None)
+    if result:
+        return [point_hit[0], point_hit[1], point_hit[2]]
+    else:
+        return [source_ray.x, source_ray.y, source_ray.z]
+
+
+def mirrorLocator(matrix_list):
+    """
+    获取YZ平面镜像的矩阵数据
+    :param matrix_list: 矩阵列表
+    :return: 镜像后矩阵列表
+    """
+    matrix_list[1] = matrix_list[1] * -1.0
+    matrix_list[2] = matrix_list[2] * -1.0
+    matrix_list[5] = matrix_list[5] * -1.0
+    matrix_list[6] = matrix_list[6] * -1.0
+    matrix_list[9] = matrix_list[9] * -1.0
+    matrix_list[10] = matrix_list[10] * -1.0
+    matrix_list[12] = matrix_list[12] * -1.0
+    return matrix_list
+
+
+def matrixConFun(parent, children, ctype, offset):
+    """
+    矩阵约束
+    :param parent: 约束者(父级)
+    :param children: 被约束者(子级)
+    :param ctype: 被约束者类型是否为骨骼
+    :param offset: 是否偏移
+    :return: 所有的节点
+    """
+    pass
+
+
+class DriveFunC:
+    """
+    具体功能
+    """
+
+    def __init__(self, win_self):
+        """
+
+        :param win_self: 窗口
+        """
+        self.get_win = win_self.findChild(QWidget, "UVDriveTool")
+        self.mesh = None
+        if cmds.objExists("Pos_Locator_Right_Grp"):
+            self.all_grp = "ALL_UVDrive_Grp"
+            self.locator_grp = "Pos_Locator_Grp"
+            self.locator_right_grp = "Pos_Locator_Right_Grp"
+            self.locator_left_grp = "Pos_Locator_Left_Grp"
+        if cmds.objExists("ALL_UVDrive_Ctrl_Grp"):
+            self.uvdrive_ctrl_all = "ALL_UVDrive_Ctrl_Grp"
+        self.re_locator_list = list()
+        self.radius = 0.5
+        self.uvd_sets = None
+        if cmds.objExists("UVdSets"):
+            if cmds.objectType("UVdSets") == "objectSet":
+                self.uvd_sets = "UVdSets"
+                self.uvd_wrist_sets = "UVdWrist"
+                self.uvd_elbow_sets = "UVdElbow"
+                self.uvd_shoulder_sets = "UVdShoulder"
+                self.uvd_ankle_sets = "UVdAnkle"
+                self.uvd_knee_sets = "UVdKnee"
+                self.uvd_hip_sets = "UVdHip"
+                self.uvd_finger_sets = "UVdFinger"
+                self.all_joint_sets = [self.uvd_wrist_sets, self.uvd_elbow_sets, self.uvd_shoulder_sets,
+                                       self.uvd_ankle_sets, self.uvd_knee_sets, self.uvd_hip_sets, self.uvd_finger_sets]
+
+    def upDate(self):
+        """
+        更新，当maya打开新的场景或打开其他文件时更新相关属性
+        :return:
+        """
+        if cmds.objExists("UVdSets"):
+            if cmds.objectType("UVdSets") == "objectSet":
+                self.uvd_sets = "UVdSets"
+                self.uvd_wrist_sets = "UVdWrist"
+                self.uvd_elbow_sets = "UVdElbow"
+                self.uvd_shoulder_sets = "UVdShoulder"
+                self.uvd_ankle_sets = "UVdAnkle"
+                self.uvd_knee_sets = "UVdKnee"
+                self.uvd_hip_sets = "UVdHip"
+                self.uvd_finger_sets = "UVdFinger"
+                self.all_joint_sets = [self.uvd_wrist_sets, self.uvd_elbow_sets, self.uvd_shoulder_sets,
+                                       self.uvd_ankle_sets, self.uvd_knee_sets, self.uvd_hip_sets, self.uvd_finger_sets]
+        if cmds.objExists("Pos_Locator_Right_Grp"):
+            self.all_grp = "ALL_UVDrive_Grp"
+            self.locator_grp = "Pos_Locator_Grp"
+            self.locator_right_grp = "Pos_Locator_Right_Grp"
+            self.locator_left_grp = "Pos_Locator_Left_Grp"
+        if cmds.objExists("ALL_UVDrive_Ctrl_Grp"):
+            self.uvdrive_ctrl_all = "ALL_UVDrive_Ctrl_Grp"
+
+    def createTransform(self, create_joint_list):
+        """
+        创建所需的set, 组和定位器，确定骨骼位置
+        :param create_joint_list: 需要创建的骨骼
+        :return:
+        """
+        cmds.undoInfo(ock = True)
+        cmds.refresh()
+        if cmds.objExists("FitSkeleton"):
+            pass
+        else:
+            return cmds.warning(u"找不到FitSkeleton曲线，请检查ADV绑定系统是否完整")
+        if self.uvd_sets is None:
+            cmds.select(cl = True)
+            self.uvd_sets = cmds.sets(n = "UVdSets")
+            self.uvd_wrist_sets = cmds.sets(n = "UVdWrist")
+            self.uvd_elbow_sets = cmds.sets(n = "UVdElbow")
+            self.uvd_shoulder_sets = cmds.sets(n = "UVdShoulder")
+            self.uvd_ankle_sets = cmds.sets(n = "UVdAnkle")
+            self.uvd_knee_sets = cmds.sets(n = "UVdKnee")
+            self.uvd_hip_sets = cmds.sets(n = "UVdHip")
+            self.uvd_finger_sets = cmds.sets(n = "UVdFinger")
+            self.all_joint_sets = [self.uvd_wrist_sets, self.uvd_elbow_sets, self.uvd_shoulder_sets,
+                                   self.uvd_ankle_sets, self.uvd_knee_sets, self.uvd_hip_sets, self.uvd_finger_sets]
+            # cmds.sets(self.uvd_sets, e = True, add = "Sets")
+            cmds.sets(self.all_joint_sets, e = True, add = self.uvd_sets)
+            cmds.lockNode(self.uvd_sets, l = True)
+            cmds.lockNode(self.all_joint_sets, l = True)
+        if not cmds.objExists("Pos_Locator_Right_Grp"):
+            self.all_grp = cmds.createNode("transform", n = "ALL_UVDrive_Grp")
+            self.locator_grp = cmds.createNode("transform", n = "Pos_Locator_Grp")
+            self.locator_right_grp = cmds.createNode("transform", n = "Pos_Locator_Right_Grp")
+            self.locator_left_grp = cmds.createNode("transform", n = "Pos_Locator_Left_Grp")
+            cmds.parent(self.locator_grp, self.all_grp)
+            cmds.parent(self.locator_right_grp, self.locator_grp)
+            cmds.parent(self.locator_left_grp, self.locator_grp)
+        for jnt in create_joint_list:
+            if "Finger" in jnt:
+                for f in finger_name:
+                    for direction in directions[2:]:
+                        loc = self._createPosLocator(f, direction, directions.index(direction))
+                        cmds.sets(loc, e = True, add = self.uvd_finger_sets)
+                break
+            for i, direction in enumerate(directions):
+                loc = self._createPosLocator(jnt, direction, i)
+                if loc:
+                    get_joint_name = jnt.split("_")[0]
+                    for index, n in enumerate(self.all_joint_sets):
+                        if get_joint_name in n:
+                            cmds.sets(loc, e = True, add = self.all_joint_sets[index])
+                if jnt in ["Elbow_R", "Knee_R"] and i == 1:
+                    break
+        for s in self.re_locator_list:
+            print(s)
+        cmds.select(cl = True)
+        cmds.undoInfo(cck = True)
+
+    def createSelectJointLocator(self, joint, drive_jnt, direction_tf, re_locator):
+        """
+        根据所选骨骼创建locator
+        :param joint: 所选择的骨骼
+        :param drive_jnt: 驱动的骨骼
+        :param direction_tf: 确定要创建的方向
+        :param re_locator: 重复的locator
+        :return: locator名称
+        """
+        cmds.undoInfo(ock = True)
+        joint_list = list()
+        for i, direction in enumerate(direction_tf):
+            if direction:
+                if cmds.objExists(joint + suffix[i] + "_PosLoc"):
+                    re_locator.append(u"已经存在" + joint + suffix[i] + "_PosLoc")
+                    continue
+                loc = self._createPosLocator(joint, directions[i], i)
+                if loc:
+                    joint_list.append(loc)
+        get_joint_name = drive_jnt.split("_")[0]
+        drive_joint_set = [sets for sets in self.all_joint_sets if get_joint_name in sets][0]
+        cmds.sets(joint_list, add = drive_joint_set)
+        cmds.undoInfo(cck = True)
+        return joint_list
+
+    def _createPosLocator(self, joint, direction, i):
+        """
+        创建定位器
+        :param joint: 需要创建的骨骼
+        :param direction: Loc方向
+        :return: Locator
+        """
+        cmds.undoInfo(ock = True)
+        if cmds.objExists(joint + suffix[i] + "_PosLoc"):
+            self.re_locator_list.append(u"已经存在" + joint + suffix[i] + "_PosLoc")
+            return 0
+        matrix = MMatrix()
+        matrix_value = cmds.xform(joint, q = True, ws = True, m = True)
+        MScriptUtil.createMatrixFromList(matrix_value, matrix)
+        if self.mesh is None:
+            post = softSelectRadius(direction, matrix)
+        else:
+            post = getPointToMeshClosestPos(self.mesh, direction, matrix)
+        loc = cmds.spaceLocator(n = "{0}{1}_PosLoc".format(joint, suffix[i]))[0]
+        cmds.xform(loc, ws = True, t = post)
+        cmds.matchTransform(loc, joint, rot = True)
+        get_shape = cmds.listRelatives(loc, s = True)[0]
+        setColour(get_shape, 17)
+        cmds.parent(loc, self.locator_right_grp)
+        cmds.undoInfo(cck = True)
+        return loc
+
+    def createMirrorLocator(self):
+        """
+        镜像左边的locator
+        :return:
+        """
+        locator_right_list = cmds.listRelatives(self.locator_right_grp, c = True)
+        locator_left_list = cmds.listRelatives(self.locator_left_grp, c = True)
+        if locator_left_list is not None:
+            cmds.delete(locator_left_list)
+        for loc in locator_right_list:
+            get_shape = cmds.listRelatives(loc, s = True)
+            drive_joint_set = [sets for sets in self.all_joint_sets if cmds.sets(loc, im = sets)][0]
+            if cmds.objectType(get_shape[0]) == "locator":
+                self._createMirrorLocatorFn(loc, drive_joint_set)
+
+    def _createMirrorLocatorFn(self, locator, drive_joint_set):
+        """
+        镜像左边的locator
+        :param locator: 需要镜像的locator
+        :param drive_joint_set: 需要添加locator的set
+        :return: locator
+        """
+        matrix = MMatrix()
+        MScriptUtil.createMatrixFromList(mirrorLocator(cmds.getAttr(locator + ".worldMatrix[0]")), matrix)
+        rot = MTransformationMatrix(matrix).rotation()
+        pos = MTransformationMatrix(matrix).translation(MSpace.kWorld)
+        left_locator = cmds.spaceLocator(n = locator.replace("_R_", "_L_"))[0]
+        get_left_locator_shape = cmds.listRelatives(left_locator, s = True)[0]
+        setColour(get_left_locator_shape, 13)
+        dag_path = MDagPath()
+        selection = MSelectionList()
+        selection.add(left_locator)
+        selection.getDagPath(0, dag_path)
+        transform_fn = MFnTransform(dag_path)
+        transform_fn.setTranslation(pos, MSpace.kWorld)
+        transform_fn.setRotation(rot, MSpace.kWorld)
+        cmds.parent(left_locator, self.locator_left_grp)
+        cmds.sets(left_locator, add = drive_joint_set)
+        return left_locator
+
+    def createDriveSystem(self):
+        """
+        构建驱动系统(创建控制器与骨骼，创建驱动，设置驱动关键帧)
+        :return:
+        """
+        self.uvdrive_ctrl_all = cmds.createNode("transform", n = "ALL_UVDrive_Ctrl_Grp")
+        right_ctrl = cmds.createNode("transform", n = "UVDrive_Ctrl_Grp_R")
+        left_ctrl = cmds.createNode("transform", n = "UVDrive_Ctrl_Grp_L")
+        cmds.parent(self.uvdrive_ctrl_all, self.all_grp)
+        cmds.parent(right_ctrl, self.uvdrive_ctrl_all)
+        cmds.parent(left_ctrl, self.uvdrive_ctrl_all)
+        for sets in cmds.sets(self.uvd_sets, q = True):
+            pass
+
+    def _createControAndJoint(self, parent, locator):
+        """
+        根据locator创建控制器和骨骼
+        :param parent: 控制器的父级
+        :param locator: 参考的locator
+        :return: 控制器
+        """
+        name_get = locator.replace("PosLoc", "Control")
+        transform_con = cmds.createNode("transform", n = name_get)
+        transform_offset = cmds.createNode("transform", n = name_get + "_Offset")
+        transform_grp = cmds.createNode("transform", n = name_get + "_Grp")
+        cmds.parent(transform_con, transform_offset)
+        cmds.parent(transform_offset, transform_grp)
+        setShape(transform_con)
+        cmds.matchTransform(transform_grp, locator, pos = True, rot = True)
+        cmds.parent(transform_grp, parent)
